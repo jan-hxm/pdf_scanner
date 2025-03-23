@@ -96,15 +96,8 @@ button {
   box-shadow: var(--btn-box-shadow);
 }
 
-.btn-primary {
-  background-color: var(--primary-blue);
-  height: 40px;
-  min-width: 42px;
-  padding: 0px 16px;
-}
-
-.btn-secondary {
-  background-color: var(--primary-turquoise);
+button:hover {
+  filter: brightness(0.9);
 }
 
 .btn-primary,
@@ -116,6 +109,19 @@ button {
   border: none;
 }
 
-button:hover {
-  filter: brightness(0.9);
+.btn-primary {
+  background-color: var(--primary-blue);
+  height: 40px;
+  padding: 8px;
+  min-width: 42px;
+  padding: 0px 16px;
+  color: var(--text-light);
+}
+
+.btn-secondary {
+  background-color: var(--primary-turquoise);
+}
+
+.btn-primary:hover {
+  background-color: darken(var(--primary-blue), 10%);
 }

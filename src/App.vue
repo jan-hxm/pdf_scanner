@@ -1,10 +1,8 @@
 <template>
   <div>
     <HeaderComponent></HeaderComponent>
-    <div class="content-container">
-      <div>
-        <SearchComponent></SearchComponent>
-      </div>
+    <div class="flex-container">
+      <SearchComponent></SearchComponent>
       <PdfViewer></PdfViewer>
       <span class="version">v1.02.64</span>
     </div>

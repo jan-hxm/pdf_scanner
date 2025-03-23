@@ -50,22 +50,25 @@
               :key="`${group.filePath}-${page.page}`"
               class="page-item"
             >
-              <div
-                @click="
-                  showPdfFromUrl(group.filePath, page.page, page.positions)
-                "
-              >
-                <span class="found-word"
-                  >📌 Gefunden: <b>{{ page.foundWord }}</b></span
+              <div class="flex-container page-info-container">
+                <div
+                  class="page-info"
+                  @click="
+                    showPdfFromUrl(group.filePath, page.page, page.positions)
+                  "
                 >
-                <span>Seite: {{ page.page }}</span>
+                  <span class="found-word"
+                    >📌 Gefunden: <b>{{ page.foundWord }}</b></span
+                  >
+                  <small>Seite: {{ page.page }}</small>
+                </div>
+                <button
+                  class="btn-outline open-pdf-btn"
+                  @click="loadPdf(group.filePath, page.page)"
+                >
+                  <i class="icon-acrobat"></i>öffnen
+                </button>
               </div>
-              <button
-                class="btn-outline"
-                @click="loadPdf(group.filePath, page.page)"
-              >
-                <i class="icon-acrobat"></i>öffnen
-              </button>
             </li>
           </ul>
         </li>
