@@ -1,0 +1,19 @@
+.header {
+  width: 100%;
+  background-color: var(--background-secondary);
+  box-shadow: 0 2px 4px var(--shadow-color);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--background);
+  position: absolute;
+  z-index: 1;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: var(--primary-blue);
+  font-weight: bold;
+  text-align: left;
+}

@@ -1,0 +1,150 @@
+.search-sidebar {
+  width: 360px;
+  min-width: 316px;
+  max-width: 560px;
+  resize: horizontal;
+  background-color: var(--background-secondary);
+  box-shadow: 4px 8px 4px var(--shadow-color);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 88vh;
+  margin-top: 58px;
+  overflow-y: auto;
+}
+
+.search-sidebar h4 {
+  margin-bottom: 4px;
+  font-size: 1rem;
+  text-align: left;
+  color: var(--text-dark);
+}
+
+.search-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.search-form {
+  display: flex;
+  flex-flow: nowrap;
+}
+
+.result-heading-container {
+  display: flex;
+  flex-flow: column;
+  justify-content: start;
+  text-align: left;
+}
+
+.result-heading-container h3 {
+  margin-bottom: 0;
+}
+
+.input-field {
+  font-weight: 300;
+  font-size: 16px;
+  min-width: 50%;
+  padding: 10px 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  transition: border-color 0.3s ease;
+  margin-top: 16px;
+}
+
+.input-field:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.btn-primary {
+  background-color: var(--primary-blue);
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: darken(var(--primary-blue), 10%);
+}
+
+.progress-section {
+  margin-bottom: 20px;
+}
+
+.progress-text {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: var(--text-dark);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  border-radius: 5px;
+}
+
+.results-section {
+  max-height: 480px;
+  overflow: auto;
+}
+
+.results-section h3 {
+  margin-bottom: 8px;
+}
+
+.results-list {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 0;
+}
+
+.result-item {
+  padding: 18px 0px;
+  align-items: center;
+  text-align: left;
+  border-bottom: 1px solid #ccc;
+  justify-content: space-between;
+}
+
+.file-name {
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--primary-blue);
+}
+
+.page-list {
+  list-style: none;
+  padding-left: 8px;
+}
+
+.page-item {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.page-item:first-child {
+  margin-top: 16px;
+}
+
+.found-word {
+  cursor: pointer;
+}
+
+.found-word:hover {
+  color: black;
+}
+
+.error {
+  color: red;
+}
+
+.success-message {
+  color: green;
+}

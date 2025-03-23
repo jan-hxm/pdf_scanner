@@ -1,0 +1,121 @@
+@font-face {
+  font-family: "Lexend";
+  src: url("../fonts/Lexend-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+/* 🌞 Light Theme (Default) */
+:root {
+  --primary-blue: #58afff;
+  --primary-turquoise: #cff7ff;
+  --primary-white: #f8f9fa;
+  --secondary-white: #e9ecef;
+
+  --highlight-green: #2bae66;
+  --highlight-yellow: #ffcb77;
+
+  --warning-orange: #f77f00;
+  --error-red: #d62828;
+
+  --text-dark: #343a40;
+  --text-light: #dee2e6;
+
+  --background: var(--secondary-white);
+  --background-secondary: var(--primary-white);
+  --text-primary: var(--text-dark);
+  --text-secondary: var(--text-light);
+
+  --font-primary: "Lexend", sans-serif;
+  --font-weight-light: 200;
+  --font-weight-regular: 400;
+  --font-weight-bold: 700;
+
+  --border-radius: 8px;
+  --transition-fast: 0.2s ease-in-out;
+  --transition-slow: 0.4s ease-in-out;
+
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --container-box-shadow: 0 4px 8px var(--shadow-color);
+  --btn-box-shadow: 0 4px 8px var(--shadow-color);
+
+  --color-black: #343a40;
+}
+
+/* 🌙 Dark Theme */
+[data-theme="dark"] {
+  --primary-blue: #104b81;
+  --primary-turquoise: #287e8f;
+  --primary-white: #1b1b1b;
+  --secondary-white: #2c2c2c;
+
+  --highlight-green: #36c57e;
+  --highlight-yellow: #ffc857;
+
+  --warning-orange: #e85d04;
+  --error-red: #d00000;
+
+  --text-dark: #e0e0e0;
+  --text-light: #a0a0a0;
+
+  --background: var(--secondary-white);
+  --background-secondary: var(--primary-white);
+  --text-primary: var(--text-dark);
+  --text-secondary: var(--text-light);
+
+  --shadow-color: rgba(255, 255, 255, 0.1);
+  --btn-box-shadow: 0 4px 8px var(--shadow-color);
+  --container-box-shadow: 0px 2px 14px 2px var(--shadow-color);
+}
+
+html {
+  background: var(--background);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+#app {
+  font-family: var(--font-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: var(--text-dark);
+}
+
+button,
+input {
+  font-family: var(--font-primary);
+  color: var(--text-dark);
+  transition: filter 0.2s ease;
+}
+
+input {
+  color: var(--color-black);
+}
+
+button {
+  box-shadow: var(--btn-box-shadow);
+}
+
+.btn-primary {
+  background-color: var(--primary-blue);
+  height: 40px;
+  min-width: 42px;
+  padding: 0px 16px;
+}
+
+.btn-secondary {
+  background-color: var(--primary-turquoise);
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+}
+
+button:hover {
+  filter: brightness(0.9);
+}
