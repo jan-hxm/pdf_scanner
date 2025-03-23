@@ -2,8 +2,8 @@
 .toggle-btn {
   margin: 0 8px;
   position: absolute;
-  top: 8px;
-  right: 48px;
+  top: 10px;
+  right: 2px;
   padding: 10px 15px;
   background-color: var(--primary-turquoise);
   border: none;

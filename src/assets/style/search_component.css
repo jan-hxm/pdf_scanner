@@ -58,6 +58,10 @@
   outline: none;
 }
 
+.search-btn {
+  min-width: 120px;
+}
+
 .btn-primary {
   background-color: var(--primary-blue);
   color: white;
@@ -90,7 +94,7 @@
 }
 
 .results-section {
-  max-height: 480px;
+  max-height: 520px;
   overflow: auto;
 }
 

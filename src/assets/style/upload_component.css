@@ -1,0 +1,19 @@
+.upload-component {
+  display: flex;
+  justify-content: start;
+  flex-flow: column;
+}
+
+.upload-container {
+  font-family: var(--font-primary);
+  background-color: var(--primary-white);
+  box-shadow: var(--container-box-shadow);
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.upload-btn {
+  max-width: 280px;
+  height: 40px;
+}

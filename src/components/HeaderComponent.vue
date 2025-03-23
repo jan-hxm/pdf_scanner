@@ -1,6 +1,6 @@
 <template>
   <header class="header">
-    <h1>💊 Antibiotika Suche</h1>
+    <h1>📄PDF Scanner</h1>
     <SettingsSidebar></SettingsSidebar>
   </header>
 </template>

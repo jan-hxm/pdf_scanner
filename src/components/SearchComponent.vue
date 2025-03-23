@@ -11,7 +11,7 @@
           class="input-field"
           placeholder="Begriff hier eingeben 🔎"
         />
-        <button type="submit" class="btn-primary">🔍 Suchen</button>
+        <button type="submit" class="btn-primary search-btn">🔍 Suchen</button>
       </form>
       <p class="error" v-if="errorMessage">{{ errorMessage }}</p>
     </div>

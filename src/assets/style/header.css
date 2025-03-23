@@ -2,7 +2,7 @@
   width: 100%;
   background-color: var(--background-secondary);
   box-shadow: 0 2px 4px var(--shadow-color);
-  padding: 16px 24px;
+  padding: 16px 0;
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--background);
@@ -12,6 +12,7 @@
 
 .header h1 {
   margin: 0;
+  padding-left: 24px;
   font-size: 1.3rem;
   color: var(--primary-blue);
   font-weight: bold;

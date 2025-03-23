@@ -1,6 +1,9 @@
 <template>
-  <div>
-    <button class="btn-secondary" @click="uploadActive = !uploadActive">
+  <div class="upload-component">
+    <button
+      class="btn-outline upload-btn"
+      @click="uploadActive = !uploadActive"
+    >
       📄 Neue PDF-Datei hinzufügen
     </button>
     <transition name="top">

@@ -5,18 +5,10 @@
 @import url("./animations.css");
 @import url("./header.css");
 @import url("./search_component.css");
+@import url("./upload_component.css");
 
 body {
   margin: 0;
-}
-
-.upload-container {
-  font-family: var(--font-primary);
-  background-color: var(--primary-white);
-  box-shadow: var(--container-box-shadow);
-  margin: 20px auto;
-  padding: 20px;
-  border-radius: 10px;
 }
 
 .mb-8 {
