@@ -2,7 +2,7 @@
 
 ## Overview
 
-PDF Searcher is a **cross-platform desktop application** designed to search for keywords and phrases within multiple PDF documents efficiently. The application is built using **Vite + Electron** for the frontend, **Vue.js 3** for a modern UI, and **Python** for handling backend operations such as text extraction and searching.
+PDF Searcher is a **Windows desktop application** designed to search for keywords and phrases within multiple PDF documents efficiently. The application is built using **Vite + Electron** for the frontend, **Vue.js 3** for a modern UI, and **Python** for handling backend operations such as text extraction and searching.
 
 This project uses a **portable Python environment (WinPython)** to ensure a seamless installation and execution without requiring a separate Python setup on the user's machine.
 
