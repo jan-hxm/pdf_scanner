@@ -9,6 +9,7 @@
   min-width: 480px;
   max-width: 1024px;
   min-height: 480px;
+  height: 420px;
   max-height: 720px;
   overflow: scroll;
   position: relative;

@@ -48,7 +48,7 @@
   min-width: 186px;
   width: 100%;
   padding: 10px 8px;
-  border-radius: 5px;
+  border-radius: 4px 0 0 4px;
   border: 1px solid #ccc;
   transition: border-color 0.3s ease;
   margin-top: 16px;
@@ -61,7 +61,10 @@
 
 .search-btn {
   min-width: 120px;
+  border-radius: 0 5px 5px 0;
+  height: 42px;
 }
+
 .progress-section {
   margin-bottom: 20px;
 }
@@ -151,4 +154,13 @@
 
 .success-message {
   color: green;
+}
+
+.icon-acrobat {
+  background: url("@/assets/images/acrobat-logo.svg") no-repeat center center;
+  background-size: contain;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
 }

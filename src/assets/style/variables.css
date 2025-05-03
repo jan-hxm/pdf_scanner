@@ -19,7 +19,7 @@
   --error-red: #d62828;
 
   --text-dark: #343a40;
-  --text-light: #dee2e6;
+  --text-light: #ffffff;
 
   --background: var(--secondary-white);
   --background-secondary: var(--primary-white);
@@ -44,7 +44,7 @@
 
 /* 🌙 Dark Theme */
 [data-theme="dark"] {
-  --primary-blue: #104b81;
+  --primary-blue: #319dff;
   --primary-turquoise: #287e8f;
   --primary-white: #1b1b1b;
   --secondary-white: #2c2c2c;
@@ -56,7 +56,7 @@
   --error-red: #d00000;
 
   --text-dark: #e0e0e0;
-  --text-light: #a0a0a0;
+  --text-light: #515151;
 
   --background: var(--secondary-white);
   --background-secondary: var(--primary-white);

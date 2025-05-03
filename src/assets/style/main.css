@@ -120,17 +120,6 @@ body {
   border-radius: 5px;
 }
 
-.file-name {
-  cursor: pointer;
-  font-weight: bold;
-  color: #003a79;
-}
-
-.page-number {
-  font-size: 14px;
-  color: #555;
-}
-
 .error {
   color: red;
 }
@@ -149,21 +138,4 @@ body {
   align-items: center;
   justify-content: center;
   color: #666;
-}
-
-.found-word {
-  cursor: pointer;
-}
-
-.found-word:hover {
-  color: black;
-}
-
-.icon-acrobat {
-  background: url("@/assets/images/acrobat-logo.svg") no-repeat center center;
-  background-size: contain;
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  margin-right: 4px;
 }

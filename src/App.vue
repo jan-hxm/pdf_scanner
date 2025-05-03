@@ -4,7 +4,7 @@
     <div class="flex-container">
       <SearchComponent></SearchComponent>
       <PdfViewer></PdfViewer>
-      <span class="version">v1.02.64</span>
+      <span class="version">v1.3.1</span>
     </div>
   </div>
 </template>
