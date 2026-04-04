@@ -16,11 +16,13 @@ import SearchComponent from "./components/SearchComponent.vue";
 import HeaderComponent from "./components/HeaderComponent.vue";
 import { activeSettings } from "./composables/useSettings";
 import { searchHistory } from "./composables/useSearch";
+import { LoadSettings } from "../wailsjs/go/main/App";
 
-onMounted(() => {});
-ipcRenderer.invoke("settings:load").then((res) => {
-  activeSettings.value = res;
-  searchHistory.value = activeSettings.value.searchHistory;
+onMounted(() => {
+  LoadSettings().then((res) => {
+    activeSettings.value = res;
+    searchHistory.value = activeSettings.value.searchHistory || [];
+  });
 });
 </script>
 

@@ -28,6 +28,8 @@
 <script setup>
 import { ref, computed } from "vue";
 import { activeSettings } from "../composables/useSettings";
+import { SaveSettings } from "../../wailsjs/go/main/App";
+
 const isOpen = ref(false);
 const currentColor = computed(() => activeSettings.value.highlightColor);
 const allColors = ref(["#4A90E2", "#50E3C2", "#F5A623", "#E74C3C", "#9B59B6"]);
@@ -58,10 +60,7 @@ const closePicker = () => {
 const selectColor = (color) => {
   activeSettings.value.highlightColor = color;
   isOpen.value = false;
-  ipcRenderer.invoke(
-    "settings:save",
-    JSON.parse(JSON.stringify(activeSettings.value))
-  );
+  SaveSettings(JSON.parse(JSON.stringify(activeSettings.value)));
 };
 
 const getColorName = (color) => {

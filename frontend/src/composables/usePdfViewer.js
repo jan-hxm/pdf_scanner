@@ -2,10 +2,9 @@ import { ref } from "vue";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
-import { useIpcRenderer } from "../composables/useIpcRenderer";
 import { errorMessage, throwError } from "../composables/useError";
+import { LoadPDF } from "../../wailsjs/go/main/App";
 
-const ipcRenderer = useIpcRenderer();
 const initialPageHighlights = ref({});
 export const canvasRef = ref(null);
 export const highlights = ref([]);
@@ -125,10 +124,13 @@ export const showPdfFromUrl = async (filePath, page, positions) => {
   errorMessage.value = "";
   renderCanvas.value = false;
   try {
-    const uint8Array = await window.ipcRenderer.invoke(
-      "pdf:load-pdf",
-      filePath
-    );
+    // LoadPDF returns []byte which Wails serializes as base64; decode to Uint8Array
+    const base64 = await LoadPDF(filePath);
+    const binary = atob(base64);
+    const uint8Array = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      uint8Array[i] = binary.charCodeAt(i);
+    }
     renderCanvas.value = true;
     loadPdf(uint8Array, page, positions);
   } catch (error) {

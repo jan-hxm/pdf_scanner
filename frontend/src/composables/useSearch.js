@@ -1,5 +1,6 @@
 import { ref } from "vue";
 import { activeSettings } from "./useSettings";
+import { SaveSettings } from "../../wailsjs/go/main/App";
 
 export const searchKeyword = ref("");
 export const searchHistory = ref([]);
@@ -25,8 +26,5 @@ export function addToSearchHistory(keyword) {
   }
   activeSettings.value.searchHistory = searchHistory.value;
 
-  ipcRenderer.invoke(
-    "settings:save",
-    JSON.parse(JSON.stringify(activeSettings.value))
-  );
+  SaveSettings(JSON.parse(JSON.stringify(activeSettings.value)));
 }

@@ -28,9 +28,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useIpcRenderer } from "../composables/useIpcRenderer";
-
-const ipcRenderer = useIpcRenderer();
+import { SelectFiles, MoveFileToPDFsFolder, GetPDFsFolder } from "../../wailsjs/go/main/App";
 
 const errorMessage = ref("");
 const successMessage = ref("");
@@ -39,20 +37,17 @@ const uploadFolder = ref("");
 
 const selectFiles = async () => {
   console.log(uploadFolder.value);
-  const filePaths = await ipcRenderer.invoke("dialog:selectPDFs");
+  const filePaths = await SelectFiles();
   if (filePaths && filePaths.length > 0) {
     for (const filePath of filePaths) {
       if (filePath.endsWith(".pdf")) {
-        const result = await ipcRenderer.invoke(
-          "file:moveToPDFsFolder",
-          filePath
-        );
-        if (result.success) {
+        try {
+          await MoveFileToPDFsFolder(filePath);
           successMessage.value = `PDF erfolgreich nach ${uploadFolder.value} verschoben.`;
           errorMessage.value = null;
-        } else {
-          console.log(result);
-          errorMessage.value = `Fehler: ${result.error}`;
+        } catch (err) {
+          console.log(err);
+          errorMessage.value = `Fehler: ${err}`;
           successMessage.value = null;
         }
       } else {
@@ -69,16 +64,12 @@ const handleFileDrop = async (event) => {
   for (let i = 0; i < files.length; i++) {
     const filePath = files[i].path;
     if (filePath.endsWith(".pdf")) {
-      const result = await ipcRenderer.invoke(
-        "file:moveToPDFsFolder",
-        filePath
-      );
-
-      if (result.success) {
+      try {
+        await MoveFileToPDFsFolder(filePath);
         successMessage.value = `${filePath} erfolgreich gespeichert.`;
         errorMessage.value = null;
-      } else {
-        errorMessage.value = `Fehler: ${result.error}`;
+      } catch (err) {
+        errorMessage.value = `Fehler: ${err}`;
         successMessage.value = null;
       }
     } else {
@@ -88,13 +79,8 @@ const handleFileDrop = async (event) => {
 };
 
 onMounted(() => {
-  ipcRenderer.invoke("dialog:getPDFsFolder").then((res) => {
+  GetPDFsFolder().then((res) => {
     uploadFolder.value = res;
-  });
-
-  ipcRenderer.on("file-move-error", (event, message) => {
-    console.log("Error:", message);
-    errorMessage.value = message;
   });
 });
 </script>

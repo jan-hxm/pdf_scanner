@@ -83,12 +83,11 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { searchKeyword, addToSearchHistory } from "../composables/useSearch";
-import { useIpcRenderer } from "../composables/useIpcRenderer";
 import { showPdfFromUrl } from "../composables/usePdfViewer";
 import { errorMessage, throwError } from "../composables/useError";
+import { SearchPDFs, GetPDFsFolder, OpenPDF } from "../../wailsjs/go/main/App";
+import { EventsOn, EventsOff } from "../../wailsjs/runtime/runtime";
 import UploadComponent from "./UploadComponent.vue";
-
-const ipcRenderer = useIpcRenderer();
 
 const progress = ref(0);
 const noResultsFound = ref(false);
@@ -96,7 +95,7 @@ const groupedResults = ref({});
 const expandedFiles = ref({});
 const activeSearchTerm = ref("");
 
-const startSearch = () => {
+const startSearch = async () => {
   errorMessage.value = false;
   if (searchKeyword.value && searchKeyword.value !== activeSearchTerm.value) {
     activeSearchTerm.value = searchKeyword.value;
@@ -107,13 +106,11 @@ const startSearch = () => {
 
     addToSearchHistory(searchKeyword.value);
 
-    console.log(
-      "📌 Sende Event 'start-pdf-search' mit Keyword:",
-      searchKeyword.value
-    );
-    ipcRenderer.send("start-pdf-search", searchKeyword.value);
+    const folder = await GetPDFsFolder();
 
-    ipcRenderer.on("pdf-search-progress", (event, data) => {
+    // Set up listener before triggering search to avoid missing early events
+    EventsOff("search-progress");
+    EventsOn("search-progress", (data) => {
       if (data.progress) {
         progress.value = data.progress;
       }
@@ -129,12 +126,11 @@ const startSearch = () => {
             grouped[result.file] = {
               fileName: result.fileName,
               filePath: result.file,
-              maxConfidence: result.confidence, // Höchste Confidence pro Datei
+              maxConfidence: result.confidence,
               pages: [],
             };
           }
 
-          // Aktuelle höchste Confidence pro Datei speichern
           if (result.confidence > grouped[result.file].maxConfidence) {
             grouped[result.file].maxConfidence = result.confidence;
           }
@@ -147,17 +143,23 @@ const startSearch = () => {
           });
         });
 
-        // Konvertiere Objekt zu sortiertem Array basierend auf maxConfidence
         groupedResults.value = Object.values(grouped).sort(
           (a, b) => b.maxConfidence - a.maxConfidence
         );
 
-        // Innerhalb jedes Dokuments die Seiten nach Confidence sortieren
         groupedResults.value.forEach((group) => {
           group.pages.sort((a, b) => b.confidence - a.confidence);
         });
       }
     });
+
+    console.log(
+      "📌 Starte Suche mit Keyword:",
+      searchKeyword.value,
+      "in Ordner:",
+      folder
+    );
+    SearchPDFs(folder, searchKeyword.value);
   } else {
     let err = "Bitte ein Schlüsselwort eingeben!";
     if (
@@ -172,24 +174,10 @@ const startSearch = () => {
 
 const loadPdf = async (pdfFilePath, pageNumber) => {
   try {
-    const response = await ipcRenderer.invoke(
-      "pdf:openPdf",
-      pdfFilePath,
-      pageNumber
-    );
-    if (response.error) {
-      errorMessage.value = response.error;
-    } else {
-      console.log(`PDF wurde auf Seite ${response.page} geöffnet.`);
-    }
+    await OpenPDF(pdfFilePath, pageNumber);
+    console.log(`PDF wurde auf Seite ${pageNumber} geöffnet.`);
   } catch (error) {
     throwError(`Fehler beim Öffnen des PDFs: ${error}`);
   }
 };
-
-onMounted(() => {
-  ipcRenderer.on("file-move-error", (_, message) => {
-    throwError(`Fehler: ${message}`);
-  });
-});
 </script>
