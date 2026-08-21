@@ -2,7 +2,10 @@
   <div class="color-picker-container">
     <button
       class="main-button"
+      type="button"
       :class="{ active: isOpen }"
+      :aria-expanded="isOpen"
+      :aria-label="`Markerfarbe: ${colorName}`"
       :style="{ backgroundColor: currentColor }"
       @click="togglePicker"
     >
@@ -10,15 +13,18 @@
     </button>
 
     <div class="color-options" :class="{ active: isOpen }">
-      <div
+      <button
         v-for="(color, index) in availableColors"
         :key="index"
+        type="button"
         class="color-option"
         :style="{ backgroundColor: color }"
+        :aria-label="`Markerfarbe ${getColorName(color)}`"
+        :tabindex="isOpen ? 0 : -1"
         @click="selectColor(color)"
       >
         <span class="color-name">{{ getColorName(color) }}</span>
-      </div>
+      </button>
     </div>
   </div>
 
@@ -69,56 +75,56 @@ const getColorName = (color) => {
 </script>
 
 <style scoped>
+/* Sits in the viewer's control bar, so it matches the small control height
+   there rather than being a 48px feature button. */
 .color-picker-container {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
 }
 
 .main-button {
-  width: 48px;
-  height: 48px;
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
   border-radius: 50%;
-  border: none;
+  border: 2px solid var(--surface);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 0 0 1px var(--border), var(--shadow-xs);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   position: relative;
   z-index: 10;
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.main-button::after {
-  content: "";
-  width: 20px;
-  height: 20px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-  transition: transform 0.3s ease;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
-}
-
-.main-button.active::after {
-  transform: rotate(180deg);
+  padding: 0;
 }
 
 .main-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px var(--border-strong), var(--shadow-sm);
+}
+
+.main-button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .color-options {
   position: absolute;
-  bottom: 70px;
+  bottom: calc(100% + var(--space-3));
   left: 50%;
-  transform: translateX(-50%) scale(0.8);
+  transform: translateX(-50%) scale(0.9);
   display: flex;
+  padding: var(--space-2);
+  gap: var(--space-2);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg);
   visibility: hidden;
   opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+  transition: transform var(--transition-fast), opacity var(--transition-fast),
+    visibility var(--transition-fast);
   z-index: 5;
 }
 
@@ -129,48 +135,54 @@ const getColorName = (color) => {
 }
 
 .color-option {
-  width: 40px;
-  height: 40px;
+  position: relative;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  margin: 0 6px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 2px solid white;
+  border: 2px solid var(--surface-raised);
+  box-shadow: 0 0 0 1px var(--border);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.color-option:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.color-option:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
+.color-option:hover,
+.color-option:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px var(--border-strong), var(--shadow-sm);
+}
+
+/* Name tooltip above the swatch, shown on hover only. */
 .color-name {
   position: absolute;
-  top: -40px;
+  bottom: calc(100% + var(--space-2));
   left: 50%;
   transform: translateX(-50%);
-  background-color: #333;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 14px;
+  background-color: var(--tooltip-bg);
+  color: var(--tooltip-fg);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  white-space: nowrap;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-fast);
   pointer-events: none;
 }
 
 .main-button:hover .color-name,
-.color-option:hover .color-name {
+.main-button:focus-visible .color-name,
+.color-option:hover .color-name,
+.color-option:focus-visible .color-name {
   opacity: 1;
 }
 
-/* Overlay when picker is active */
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: transparent;
   display: none;
   z-index: 2;
@@ -178,22 +190,5 @@ const getColorName = (color) => {
 
 .overlay.active {
   display: block;
-}
-
-/* Color animation pulse for active button */
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-  }
-}
-
-.main-button.active {
-  animation: pulse 1.5s infinite;
 }
 </style>

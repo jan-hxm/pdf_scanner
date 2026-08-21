@@ -1,55 +1,160 @@
-/* Button zum Öffnen/Schließen der Sidebar */
-.toggle-btn {
-  margin: 0 8px;
-  position: absolute;
-  top: 10px;
-  right: 2px;
-  padding: 10px 15px;
-  background-color: var(--primary-turquoise);
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  z-index: 1001;
-  box-shadow: var(--btn-box-shadow);
+/* ---------------------------------------------------------------------------
+   Settings panel (right side).
+
+   The controls stack full width on one left edge, each row is a labelled
+   section rather than a floating button, and the panel scrolls under a fixed
+   header instead of tucking its content behind it.
+   --------------------------------------------------------------------------- */
+
+/* The panel renders inside the fixed header's stacking context, so the toggle
+   needs to sit above it to stay clickable once the panel is open. */
+.settings-toggle {
+  position: relative;
+  z-index: 1200;
 }
 
-/* Sidebar-Styling */
+.sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  background: hsl(220deg 25% 12% / 0.32);
+  z-index: 1000;
+  border: none;
+  padding: 0;
+  cursor: default;
+}
+
 .sidebar {
   position: fixed;
-  display: flex;
-  flex-flow: column;
-  align-items: start;
   top: 0;
   right: 0;
-  width: 224px;
+  width: 296px;
   height: 100vh;
-  background: var(--background-secondary);
-  box-shadow: -2px 0 5px var(--shadow-color);
-  padding: 20px;
-  padding-top: 64px;
+  display: flex;
+  flex-flow: column;
+  align-items: stretch;
+  gap: var(--space-5);
+  padding: calc(var(--header-height, 56px) + var(--space-5)) var(--space-5)
+    var(--space-5);
+  background: var(--surface);
+  border-left: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-lg);
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 1050;
 }
 
-.sidebar h3 {
-  margin-top: 32px;
-  text-align: left;
+.sidebar-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
 }
 
-.sidebar ul {
-  padding: 0;
-  max-height: 420px;
-  overflow-y: scroll;
+/* Section ---------------------------------------------------------------- */
+
+.sidebar-section {
+  display: flex;
+  flex-flow: column;
+  gap: var(--space-2);
 }
 
-.sidebar li {
+.sidebar-section + .sidebar-section {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Small caps label above each group — tells the user what the control does
+   without relying on the emoji inside the button. */
+.sidebar-label {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sidebar-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* History list ----------------------------------------------------------- */
+
+.history-list {
   list-style: none;
+  margin: var(--space-1) 0 0;
   padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-flow: column;
+  gap: 2px;
+}
+
+.history-item {
+  display: flex;
+  flex-flow: column;
+  gap: 2px;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
   text-align: left;
   cursor: pointer;
-  margin-top: 8px;
+  transition: background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
-.sidebar-controls {
-  min-width: 168px;
+.history-item:hover {
+  background-color: var(--surface-hover);
+  border-color: var(--border-subtle);
+}
+
+.history-item:active {
+  background-color: var(--surface-active);
+}
+
+.history-keyword {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-time {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.history-empty {
+  margin: 0;
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+}
+
+/* Folder ----------------------------------------------------------------- */
+
+.pdfs-folder {
+  display: flex;
+  flex-flow: column;
+  gap: var(--space-2);
+}
+
+.folder-path {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--text-secondary);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  word-break: break-all;
 }

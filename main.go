@@ -15,7 +15,7 @@ var assets embed.FS
 func main() {
 	app := NewApp()
 	err := wails.Run(&options.App{
-		Title:     "PDF-Searcher",
+		Title:     "PDF Scanner",
 		Width:     1200,
 		Height:    800,
 		MinWidth:  680,
@@ -25,6 +25,14 @@ func main() {
 		},
 		OnStartup: app.startup,
 		Bind:      []interface{}{app},
+		DragAndDrop: &options.DragAndDrop{
+			// WebView2 exposes no path on dropped File objects; Wails hands the
+			// real absolute paths to runtime.OnFileDrop instead.
+			EnableFileDrop: true,
+			// Without this, a file dropped outside the drop area is opened by
+			// the webview itself, replacing the app with a PDF view.
+			DisableWebViewDrop: true,
+		},
 		Windows: &windows.Options{
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,

@@ -1,20 +1,33 @@
 .header {
-  width: 100%;
-  background-color: var(--background-secondary);
-  box-shadow: 0 2px 4px var(--shadow-color);
-  padding: 16px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height, 56px);
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--background);
-  position: absolute;
-  z-index: 1;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0 var(--space-4) 0 var(--space-5);
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-xs);
+  z-index: 1100;
 }
 
 .header h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   margin: 0;
-  padding-left: 24px;
-  font-size: 1.3rem;
-  color: var(--primary-blue);
-  font-weight: bold;
-  text-align: left;
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }

@@ -1,0 +1,150 @@
+/* ---------------------------------------------------------------------------
+   Element defaults: typography, form controls, scrollbars, focus.
+   Everything here reads from the tokens in variables.css.
+   --------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 16px;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+}
+
+#app {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  /* App chrome reads left-to-right; only individual components centre
+     themselves, and they say so. */
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2);
+}
+
+h1 {
+  font-size: var(--text-xl);
+}
+h2 {
+  font-size: var(--text-lg);
+}
+h3 {
+  font-size: var(--text-md);
+}
+h4 {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+}
+
+p {
+  margin: 0 0 var(--space-2);
+}
+
+small {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+b,
+strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Form controls -------------------------------------------------------- */
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* One focus treatment for the whole app. Keyboard users get a visible ring;
+   pointer users do not get a ring stuck on the last thing they clicked. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Scrollbars ----------------------------------------------------------- */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: var(--radius-pill);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--border-strong);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

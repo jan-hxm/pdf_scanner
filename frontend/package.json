@@ -1,9 +1,9 @@
 {
-  "name": "pdf-searcher",
+  "name": "pdf_scanner",
   "author": "https://github.com/jan-hxm",
-  "description": "PDF-Searcher searches pdf files for a keyword and displays the found words on the UI.",
+  "description": "PDF Scanner searches pdf files for a keyword and displays the found words on the UI.",
   "private": true,
-  "version": "1.3.1",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

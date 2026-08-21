@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div class="app-shell">
     <HeaderComponent></HeaderComponent>
-    <div class="flex-container">
+    <main class="flex-container app-main">
       <SearchComponent></SearchComponent>
       <PdfViewer></PdfViewer>
-      <span class="version">v1.3.1</span>
-    </div>
+    </main>
+    <span class="version">v{{ version }}</span>
   </div>
 </template>
 
@@ -17,6 +17,8 @@ import HeaderComponent from "./components/HeaderComponent.vue";
 import { activeSettings } from "./composables/useSettings";
 import { searchHistory } from "./composables/useSearch";
 import { LoadSettings } from "../wailsjs/go/main/App";
+
+const version = __APP_VERSION__;
 
 onMounted(() => {
   LoadSettings().then((res) => {

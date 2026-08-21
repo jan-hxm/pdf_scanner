@@ -19,26 +19,69 @@
         }"
       ></div>
     </div>
+
+    <!-- Nothing opened yet: say so, rather than leaving half the window blank. -->
+    <div class="pdf-placeholder" v-if="!renderCanvas && !isLoading">
+      <span class="pdf-placeholder-icon" aria-hidden="true">📄</span>
+      <p>Noch kein Dokument geöffnet</p>
+      <p>Einen Treffer in der Liste anklicken, um ihn hier anzuzeigen.</p>
+    </div>
+
     <div :class="isLoading ? 'invis-canvas' : ''">
       <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+      <p v-if="viewerMessage" class="error">{{ viewerMessage }}</p>
+
       <div class="pdf-controls-container" v-if="renderCanvas">
         <div class="pdf-controls">
-          <button class="btn-primary" @click="prevPage()">{{ "<" }}</button>
-          <p>Seite {{ currentPage }} / {{ totalPages }}</p>
-          <button class="btn-primary" @click="nextPage()">></button>
+          <button
+            class="btn-ghost btn-icon btn-sm"
+            title="Vorherige Seite"
+            aria-label="Vorherige Seite"
+            :disabled="currentPage <= 1"
+            @click="prevPage()"
+          >
+            <span aria-hidden="true">‹</span>
+          </button>
+          <p class="pdf-readout">Seite {{ currentPage }} / {{ totalPages }}</p>
+          <button
+            class="btn-ghost btn-icon btn-sm"
+            title="Nächste Seite"
+            aria-label="Nächste Seite"
+            :disabled="currentPage >= totalPages"
+            @click="nextPage()"
+          >
+            <span aria-hidden="true">›</span>
+          </button>
         </div>
+
         <div class="pdf-controls">
-          <button class="btn-primary" @click="scaleDown()">-</button>
-          <p>🔎Zoom {{ scale.toFixed(1) }}</p>
-          <button class="btn-primary" @click="scaleUp()">+</button>
+          <button
+            class="btn-ghost btn-icon btn-sm"
+            title="Verkleinern"
+            aria-label="Verkleinern"
+            @click="scaleDown()"
+          >
+            <span aria-hidden="true">−</span>
+          </button>
+          <p class="pdf-readout">{{ Math.round(scale * 100) }} %</p>
+          <button
+            class="btn-ghost btn-icon btn-sm"
+            title="Vergrößern"
+            aria-label="Vergrößern"
+            @click="scaleUp()"
+          >
+            <span aria-hidden="true">+</span>
+          </button>
         </div>
+
         <div class="pdf-controls">
-          <p>Marker:</p>
+          <p class="pdf-controls-label">Marker</p>
           <ColorPicker></ColorPicker>
         </div>
       </div>
     </div>
-    <p v-if="isLoading">📄 lade PDF...</p>
+
+    <p class="pdf-status" v-if="isLoading">PDF wird geladen …</p>
   </div>
 </template>
 
@@ -55,6 +98,7 @@ import {
   scaleUp,
   scaleDown,
   scale,
+  viewerMessage,
 } from "../composables/usePdfViewer.js";
 import { highlightColor } from "../composables/useSettings.js";
 import { errorMessage } from "../composables/useError.js";

@@ -1,19 +1,40 @@
+/* ---------------------------------------------------------------------------
+   Right pane: the embedded PDF.js canvas and its controls.
+   --------------------------------------------------------------------------- */
+
 .pdf-container {
-  margin-left: 16px;
-  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  gap: var(--space-3);
+  height: calc(100vh - var(--header-height));
+  padding: var(--space-5);
+  overflow: auto;
 }
 
+/* The page itself sits on a sunken ground so the white paper reads as a
+   document rather than as more app background. */
 .pdf-wrapper {
-  margin-top: 72px;
   resize: both;
-  min-width: 480px;
-  max-width: 1024px;
-  min-height: 480px;
-  height: 420px;
-  max-height: 720px;
-  overflow: scroll;
+  min-width: 420px;
+  max-width: 100%;
+  min-height: 420px;
+  height: 60vh;
+  max-height: 760px;
+  overflow: auto;
   position: relative;
   display: inline-grid;
+  padding: var(--space-3);
+  background-color: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.pdf-wrapper canvas {
+  box-shadow: var(--shadow-md);
+  border-radius: 2px;
 }
 
 .invis-canvas {
@@ -22,31 +43,83 @@
 
 .highlight {
   position: absolute;
-  background: rgb(255, 46, 81);
-  opacity: 0.5;
+  opacity: 0.42;
   border-radius: 2px;
   pointer-events: none;
+  mix-blend-mode: multiply;
 }
+
+[data-theme="dark"] .highlight {
+  mix-blend-mode: normal;
+}
+
+/* Controls --------------------------------------------------------------- */
 
 .pdf-controls-container {
   display: flex;
-  justify-content: flex-start;
-  background: var(--background-secondary);
-  padding: 12px;
-  border-radius: 0 0 8px 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
 }
 
 .pdf-controls {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: var(--space-1);
 }
 
-.pdf-controls button {
-  margin: 0 8px;
+/* Readout between a pair of steppers: fixed width and tabular figures, so the
+   buttons do not shift as the page or zoom number changes width. */
+.pdf-readout {
+  margin: 0;
+  min-width: 92px;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.error {
-  color: red;
-  font-weight: bold;
+.pdf-controls-label {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.pdf-status {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.pdf-placeholder {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 320px;
+  padding: var(--space-8);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.pdf-placeholder-icon {
+  font-size: 2rem;
+  line-height: 1;
 }

@@ -1,9 +1,13 @@
 <template>
-  <div>
-    <button @click="toggleTheme" class="btn-secondary sidebar-controls mb-8">
-      {{ theme === "light" ? "🌙 Dunkel" : "☀️ Hell" }}
-    </button>
-  </div>
+  <button
+    type="button"
+    class="btn-outline btn-block btn-start"
+    :aria-pressed="theme === 'dark'"
+    @click="toggleTheme"
+  >
+    <span aria-hidden="true">{{ theme === "light" ? "🌙" : "☀️" }}</span>
+    {{ theme === "light" ? "Dunkles Design" : "Helles Design" }}
+  </button>
 </template>
 
 <script setup>
