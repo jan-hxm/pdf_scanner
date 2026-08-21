@@ -32,7 +32,16 @@
   border-radius: var(--radius-lg);
 }
 
-.pdf-wrapper canvas {
+/* Origin for the highlight boxes: hugs the canvas exactly, so padding on the
+   scroll container above cannot offset them. */
+.pdf-page {
+  position: relative;
+  width: max-content;
+  line-height: 0;
+}
+
+.pdf-page canvas {
+  display: block;
   box-shadow: var(--shadow-md);
   border-radius: 2px;
 }
@@ -43,7 +52,7 @@
 
 .highlight {
   position: absolute;
-  opacity: 0.42;
+  opacity: 0.5;
   border-radius: 2px;
   pointer-events: none;
   mix-blend-mode: multiply;

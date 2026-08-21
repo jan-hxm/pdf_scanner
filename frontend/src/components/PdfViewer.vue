@@ -5,19 +5,28 @@
       v-if="renderCanvas"
       :class="isLoading ? 'invis-canvas' : ''"
     >
-      <canvas ref="canvasRef"></canvas>
-      <div
-        v-for="(hl, index) in highlights"
-        :key="index"
-        class="highlight"
-        :style="{
-          left: `${hl.x}px`,
-          top: `${hl.y}px`,
-          width: `${hl.width}px`,
-          height: `${hl.height}px`,
-          backgroundColor: highlightColor,
-        }"
-      ></div>
+      <!--
+        Highlight coordinates come out of usePdfViewer in canvas pixel space,
+        so they must be measured from the canvas' own top-left corner. This
+        wrapper is what makes that true: it is the positioned ancestor, and it
+        hugs the canvas, so any padding or border on .pdf-wrapper cannot shift
+        the boxes off the glyphs.
+      -->
+      <div class="pdf-page">
+        <canvas ref="canvasRef"></canvas>
+        <div
+          v-for="(hl, index) in highlights"
+          :key="index"
+          class="highlight"
+          :style="{
+            left: `${hl.x}px`,
+            top: `${hl.y}px`,
+            width: `${hl.width}px`,
+            height: `${hl.height}px`,
+            backgroundColor: highlightColor,
+          }"
+        ></div>
+      </div>
     </div>
 
     <!-- Nothing opened yet: say so, rather than leaving half the window blank. -->
