@@ -72,11 +72,21 @@
 }
 
 .progress-text {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
   margin-bottom: var(--space-2);
+}
+
+/* The file counter carries the real information; the percentage is the bar. */
+.progress-count {
+  color: var(--text-muted);
+  font-weight: var(--font-weight-regular);
 }
 
 .progress-bar {

@@ -9,7 +9,7 @@
 
       1. go / node / npm / wails / gcc on PATH, and Wails CLI >= 2.15 (2.12 cannot
          generate bindings under Go 1.27).
-      2. The Go-only quality gates: gofmt, go vet, go test ./internal/match/.
+      2. The Go-only quality gates: gofmt, go vet, and the tests that need no C toolchain.
       3. CGO_LDFLAGS aliasing __intrinsic_setjmpex to _setjmpex, which go-fitz' prebuilt
          MuPDF needs on mingw-w64 v12+.
       4. A clean build/bin, so stale binaries from an earlier name do not linger.
@@ -137,7 +137,11 @@ if ($SkipChecks) {
     Assert-ExitCode 'go vet'
     Write-Ok 'go vet clean'
 
-    & go test ./internal/match/
+    # Both packages are free of the PDF dependency, so they test without a C
+    # toolchain or a MuPDF DLL. That is the reason they are listed one by one
+    # rather than as ./internal/... - the packages that import go-fitz would
+    # drag the whole toolchain into a check meant to be cheap.
+    & go test ./internal/match/ ./internal/ocr/textcache/
     Assert-ExitCode 'go test'
 }
 

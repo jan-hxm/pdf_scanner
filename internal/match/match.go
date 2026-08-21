@@ -5,9 +5,9 @@
 package match
 
 import (
-	"math"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/hbollon/go-edlib"
 )
@@ -15,9 +15,8 @@ import (
 // MinConfidence is the score a line must reach to count as a hit.
 //
 // The value was inherited from the Python build, where it was tuned against
-// rapidfuzz. go-edlib's Levenshtein similarity is a different scale, so this
-// number is a starting point rather than a measured optimum — see the
-// threshold item in To-Do.md.
+// rapidfuzz, and go-edlib's Levenshtein similarity is a different scale — so it
+// has now been measured rather than assumed.
 const MinConfidence = 85
 
 var (
@@ -29,7 +28,7 @@ var (
 	reAbbrev     = regexp.MustCompile(`\b(?:[A-Za-z]\.){1,}[A-Za-z]?[a-z]*\b`)
 )
 
-// NormalizeScientificName folds "E. coli", "E.coli" and "e coli" onto the same
+// NormalizeScientificName folds "L. orem", "L.orem" and "l orem" onto the same
 // string, so an abbreviated genus matches however it was typeset.
 func NormalizeScientificName(text string) string {
 	s := strings.ToLower(strings.TrimSpace(text))
@@ -112,20 +111,68 @@ func fuzzyRatio(s1, s2 string) float64 {
 	return float64(sim) * 100
 }
 
-func fuzzyPartialRatio(s1, s2 string) float64 {
-	r1 := []rune(s1)
-	r2 := []rune(s2)
-	if len(r1) >= len(r2) {
-		return fuzzyRatio(s1, s2)
+// partialRatio is the best fuzzyRatio between needle and any needle-length
+// window of haystack, i.e. "how well does the best part of haystack match
+// needle". It is only meaningful with haystack the longer of the two; the
+// caller enforces that, because the reverse reading is what produced the false
+// positives described in Score.
+func partialRatio(needle, haystack string) float64 {
+	n := []rune(needle)
+	h := []rune(haystack)
+	if len(n) >= len(h) {
+		return fuzzyRatio(needle, haystack)
 	}
 	best := 0.0
-	for i := 0; i <= len(r2)-len(r1); i++ {
-		sub := string(r2[i : i+len(r1)])
-		if score := fuzzyRatio(s1, sub); score > best {
+	for i := 0; i <= len(h)-len(n); i++ {
+		if score := fuzzyRatio(needle, string(h[i:i+len(n)])); score > best {
 			best = score
 		}
 	}
 	return best
+}
+
+// maxPartialLengthFactor caps how much longer than the keyword a token may be
+// before partialRatio stops being applied to it. tokenizeText emits whole
+// multi-word phrases, and sliding the keyword along a paragraph-sized one costs
+// a Levenshtein pass per offset for no benefit: an exact occurrence inside such
+// a run is already strategy 1's, and a misspelt one is found by the span scan
+// in strategy 5, which windows the line properly.
+const maxPartialLengthFactor = 3
+
+// lengthPlausible reports whether candidate is close enough to keyword in
+// length to be worth scoring as a match for it. Normalised lengths within half
+// to double: outside that band the edit distance is dominated by the missing or
+// surplus characters, so the comparison only costs time.
+func lengthPlausible(candidate, keyword string) bool {
+	c := len([]rune(NormalizeScientificName(candidate)))
+	k := len([]rune(NormalizeScientificName(keyword)))
+	return c*2 >= k && c <= k*2
+}
+
+// spans locates the whitespace-separated tokens of line as byte ranges, so a
+// run of them can be sliced straight back out of the line. strings.Fields plus
+// strings.Join cannot: it collapses the original spacing, and the result is
+// then not a substring of the line — which the viewer relies on to find and
+// highlight the match.
+func spans(line string) [][2]int {
+	var out [][2]int
+	start := -1
+	for i, r := range line {
+		if unicode.IsSpace(r) {
+			if start >= 0 {
+				out = append(out, [2]int{start, i})
+				start = -1
+			}
+			continue
+		}
+		if start < 0 {
+			start = i
+		}
+	}
+	if start >= 0 {
+		out = append(out, [2]int{start, len(line)})
+	}
+	return out
 }
 
 // Score rates how well line matches keyword and returns the score together
@@ -137,8 +184,10 @@ func fuzzyPartialRatio(s1, s2 string) float64 {
 //  1. case-insensitive substring          100
 //  2. normalised scientific name           95
 //  3. token equality after normalisation    90
-//  4. Levenshtein ratio / partial ratio    computed
-//  5. character 3-gram Jaccard overlap     computed
+//  4. Levenshtein ratio of a token, or of the keyword slid along a longer
+//     token                                computed
+//  5. character 3-gram Jaccard overlap of a short token span
+//     computed
 func Score(line, keyword string) (float64, string) {
 	lineLower := strings.ToLower(line)
 	keyLower := strings.ToLower(keyword)
@@ -156,8 +205,8 @@ func Score(line, keyword string) (float64, string) {
 	normKeyword := NormalizeScientificName(keyword)
 	if strings.Contains(normLine, normKeyword) {
 		// Match the keyword's letters in order, allowing an optional period and
-		// any whitespace between them — "Ecoli" then matches "E. coli",
-		// "E.coli" and "e coli" alike. The separator goes *between* letters
+		// any whitespace between them — "Lorem" then matches "L. orem",
+		// "L.orem" and "l orem" alike. The separator goes *between* letters
 		// only; appending it after the last one would demand a trailing period.
 		parts := []rune(strings.ReplaceAll(strings.ReplaceAll(keyword, ".", ""), " ", ""))
 		var pattern strings.Builder
@@ -185,46 +234,58 @@ func Score(line, keyword string) (float64, string) {
 		}
 	}
 
-	// Strategy 4: Token-based fuzzy matching
+	// Strategy 4: fuzzy token matching.
+	//
+	// The comparison is directional: a partial ratio slides the *keyword* along a
+	// longer token, answering "does this token contain something like the
+	// keyword" — the question the search is actually asking. Sliding a shorter
+	// token along the keyword answers the reverse, and answers it with 100 for
+	// any token that happens to be a piece of the keyword. A token
+	// shorter than the keyword is scored by the plain ratio instead, which
+	// charges it for the length it is missing.
 	bestScore := 0.0
 	var bestMatch string
 
+	keyLen := len([]rune(normKeyword))
 	for _, word := range words {
-		if len([]rune(word)) > 2 {
-			normWord := NormalizeScientificName(word)
-			ratio := fuzzyRatio(normWord, normKeyword)
-			partial := fuzzyPartialRatio(normWord, normKeyword)
-			score := math.Max(ratio, partial)
-			if score > bestScore {
-				bestScore = score
-				bestMatch = word
+		if len([]rune(word)) <= 2 {
+			continue
+		}
+		normWord := NormalizeScientificName(word)
+		score := fuzzyRatio(normWord, normKeyword)
+		if n := len([]rune(normWord)); n > keyLen && n <= keyLen*maxPartialLengthFactor {
+			if p := partialRatio(normKeyword, normWord); p > score {
+				score = p
 			}
+		}
+		if score > bestScore {
+			bestScore = score
+			bestMatch = word
 		}
 	}
 
-	// Strategy 5: N-gram similarity fallback
-	ngramScore := NgramSimilarity(line, keyword, 3)
-	if ngramScore > bestScore {
-		tokens := strings.Fields(line)
-		var bestNgramMatch string
-		bestNgramScore := 0.0
-		for i := 0; i < len(tokens); i++ {
-			maxSpan := 4
-			if len(tokens)-i < maxSpan {
-				maxSpan = len(tokens) - i
+	// Strategy 5: n-gram similarity over short token spans.
+	//
+	// Scored per span, not per line. The old code compared the whole line to the
+	// keyword and then reported a span as the matched word, so the confidence
+	// described one string while the highlight searched for another. It also
+	// scaled badly: MuPDF extracts some pages as a single paragraph-long "line",
+	// whose n-gram set dilutes any keyword to nothing no matter what it contains.
+	//
+	// Spans are sliced out of the line by offset so the result stays a substring
+	// of it, and only spans of a plausible length are scored.
+	maxSpan := len(strings.Fields(keyword)) + 1
+	toks := spans(line)
+	for i := range toks {
+		for n := 1; n <= maxSpan && i+n <= len(toks); n++ {
+			phrase := line[toks[i][0]:toks[i+n-1][1]]
+			if !lengthPlausible(phrase, keyword) {
+				continue
 			}
-			for span := 1; span < maxSpan; span++ {
-				phrase := strings.Join(tokens[i:i+span], " ")
-				score := NgramSimilarity(phrase, keyword, 3)
-				if score > bestNgramScore {
-					bestNgramScore = score
-					bestNgramMatch = phrase
-				}
+			if score := NgramSimilarity(phrase, keyword, 3); score > bestScore {
+				bestScore = score
+				bestMatch = phrase
 			}
-		}
-		bestScore = ngramScore
-		if bestNgramMatch != "" {
-			bestMatch = bestNgramMatch
 		}
 	}
 

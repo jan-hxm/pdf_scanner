@@ -1,8 +1,8 @@
 # To-Do
 
 Findings from an audit of the state after the Go/Wails rework (`a6ea5a7`), with a pass of
-fixes applied on top. Items 1–5, 7, 8, 11, 12, 13, 14, 15, 17, 18, 19, 24 and 25 are done;
-what is left is ordered by severity below.
+fixes applied on top. Items 1–5, 7, 8, 11, 12, 13, 14, 15, 17, 18, 19, 24, 25, 26 and 27 are
+done; what is left is ordered by severity below.
 
 ---
 
@@ -80,8 +80,13 @@ therefore only matched when followed by a period, and otherwise fell through to 
 scoring 90 instead of 95 and returning a different matched word. The pattern is now built
 with the separator between letters only.
 
+Item 27 added a second package on the same principle: `internal/ocr/textcache` holds the
+recognised-text cache and imports no PDF code, so it tests on a bare checkout too.
+
 **Still open:** nothing covers `internal/search` (a small fixture PDF under `testdata/`
-would do it) or the frontend highlight math.
+would do it), the frontend highlight math, or `internal/ocr`'s recognition path — the last
+of which needs both the MuPDF toolchain and an installed Tesseract to run at all, so it
+wants a build-tagged integration test rather than a unit test.
 
 ### 13. Unbounded goroutine fan-out — **fixed**
 Worker pool bounded to `runtime.NumCPU()` via a semaphore.
@@ -119,6 +124,89 @@ Messages clear themselves after 5s and no longer mix `null` into a `""` ref.
 ### 25. Confidence — **fixed**
 Each hit shows "exakt" or "~*n*%", with the exact score in the tooltip.
 
+### 26. The 85-point threshold — **measured; the real bug was elsewhere**
+The threshold was not the problem. `Score` was.
+
+Strategy 4 called `fuzzyPartialRatio(token, keyword)`, which — when the token was *shorter*
+than the keyword — slid the token along the keyword and returned the best window. That asks
+"is this token a piece of the keyword", the reverse of the question the search is asking,
+and it returns 100 for any token that happens to be a fragment. Searching a real file the search term matched various abbriviations, each at confidence
+100 — indistinguishable from a verbatim match, so *no* threshold separated them. Item 26
+was blaming the gate for a bug behind it.
+
+Fixed by making the comparison directional: the keyword is slid along tokens *longer* than
+it, and shorter tokens get the plain ratio, which charges them for the length they are
+missing. The same search now returns **1 hit, the correct one**. Fuzzy recall is unaffected.
+
+The error-free band is **[82, 85]** and `MinConfidence` stays at **85**, at its top edge, on
+purpose: above it the errors are missed hits, below it they are near-miss. The floor (85.71) is a one-letter typo in a
+seven-letter word — below roughly that length edit distance genuinely cannot tell a typo
+from a different word, which is not something a threshold can fix.
+
+The sweep fails if `MinConfidence` ever drifts out of the band, and fails with a distinct
+message if *no* threshold classifies the set — i.e. if the scorer regresses the way it had.
+
+### 27. Scanned PDFs cannot be searched at all — **fixed with on-demand OCR**
+
+Found while investigating item 26. A scanned pdf yields **zero** characters from `doc.Text` on every page: a pure image scan with no
+text layer, which no amount of scoring could ever search.
+
+Of the two options this item listed, **filename matching was explicitly rejected** — it
+cannot say which page, and a file that happens to be *named* after the term is not the same
+as a file that contains it. OCR was built instead.
+
+**How it runs.** Not during the search. Recognition costs seconds per page, so scanning a file with numerous pages
+takes minutes; a search that stopped to OCR would hang on the first run after a scan is
+added with nothing on screen. The search returns and reports its textless files, the new
+[OcrPanel.vue](frontend/src/components/OcrPanel.vue) offers to recognise them, and the
+results already on screen stay readable while it works. When it finishes, `SearchComponent`
+re-runs the same keyword and the scan has hits — marked `OCR`, since a scan has no text
+layer for the viewer to highlight.
+
+**The language is asked for every run.** Tesseract has no language identification: `--psm 0`
+detects script and orientation, and German and English are both Latin. Something has to name
+the model, and a remembered answer is silently wrong for the next document. The picker lists
+the installed languages and offers a combined `deu+eng` when both are there, because
+Tesseract takes several at once and lets them compete per word. Deliberately not persisted —
+`Settings.Language` is the *UI* locale from item 21 and conflating the two would bite later.
+
+**The cache is what makes it viable.** [internal/ocr/textcache](internal/ocr/textcache/)
+stores one JSON file per document under `%AppData%\pdf_scanner\ocr-cache\`, named for the
+SHA-256 of its bytes:
+
+- Keyed on content, so a rename, a move or a re-import reuses the text and an edit re-runs.
+- Language recorded *in* the entry, not folded into the key — two entries for one document
+  would leave the search with no way to choose between them, so re-running in another
+  language replaces it.
+- Only textless files are hashed, so the cost lands on the handful of scans rather than on
+  every file in the folder on every search.
+- A cancelled run caches nothing. Half a document would otherwise read back as a whole one
+  forever.
+- Writes go via a temp file and a rename; a damaged, truncated or out-of-date entry reads as
+  a miss, because the cost of a miss is one re-run and the cost of trusting it is a document
+  that silently searches wrong.
+
+**Tesseract is a subprocess, not a library.** gosseract would link libtesseract through cgo,
+a second native dependency in a build that already needs a linker workaround for MuPDF. One
+process per page is a rounding error next to recognition. `ocr.Locate()` prefers a copy
+bundled at `<exe dir>/tesseract/`, then `PATH`, then the usual installer paths. Pages are
+rasterised with `doc.ImagePNG(page, 300)` and piped in on stdin — no temp files. Each
+process gets `OMP_THREAD_LIMIT=1` with one process per core, since letting them each fan out
+again oversubscribes the machine enough to be slower than running them serially.
+
+**Verified** against a real file: the search still returns all files scanned and a single
+correct hit for the one textless file. With a cache entry seeded for that
+scan it returns three hits — two from the scan at `Match: "ocr"` with correct page numbers
+and occurrence counts — and reports zero textless files. `internal/ocr/textcache` has
+table-driven coverage for hashing, the round trip, replacement, and every way an entry can
+be unusable; it imports no PDF code, so like `internal/match` it tests without a C
+toolchain. [build.ps1](build.ps1) runs both.
+
+**Still open:** Tesseract is not bundled — the app detects its absence and says which files
+are scans and what to install, but the user has to install it. Bundling it plus
+`deu.traineddata` in `build/` would make OCR work out of the box; the loader already prefers
+a bundled copy, so it is a packaging step rather than a code change.
+
 ---
 
 ## P1 — Build and repo hygiene
@@ -130,7 +218,7 @@ gcc and the Wails CLI version, runs `gofmt -l .`, `go vet ./internal/...` and
 `wails build -clean`.
 
 **Still open:** nothing runs it automatically. A GitHub Actions workflow should invoke the
-same four steps — the first three are cheap and catch most regressions without a MuPDF
+same steps — the first three are cheap and catch most regressions without a MuPDF
 toolchain, so they can run on `ubuntu-latest`, while the `wails build` job needs a Windows
 runner with gcc, Node and the same `CGO_LDFLAGS`.
 
@@ -175,12 +263,6 @@ still two copies and a visible pause.
 
 Fix: serve PDFs over the Wails asset server (or a custom handler) and hand PDF.js a URL, so
 it can range-request instead.
-
-### 26. The 85-point threshold is hardcoded and unexplained
-`match.MinConfidence`. It was tuned for Python's `rapidfuzz`; go-edlib's Levenshtein
-similarity is a different scale, so the port may be letting through noise or dropping good
-hits. Now that `internal/match` is testable in isolation, this can actually be measured —
-build a fixture set of lines with expected verdicts and sweep the threshold.
 
 ---
 

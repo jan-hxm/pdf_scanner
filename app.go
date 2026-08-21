@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"pdf_scanner/internal/ocr"
 	"pdf_scanner/internal/opener"
 	"pdf_scanner/internal/search"
 )
@@ -23,6 +24,12 @@ type App struct {
 	mu           sync.Mutex
 	cancelSearch context.CancelFunc
 	searchGen    uint64
+
+	// cancelOCR aborts the recognition run in flight. It is separate from
+	// cancelSearch on purpose: OCR outlives the search that discovered the
+	// scan, so cancelling one must not cancel the other.
+	cancelOCR context.CancelFunc
+	ocrGen    uint64
 }
 
 func NewApp() *App { return &App{} }
@@ -67,6 +74,14 @@ func settingsDir() string {
 
 func settingsPath() string {
 	return filepath.Join(settingsDir(), "settings.json")
+}
+
+// ocrCacheDir is where recognised text is kept, next to the settings. It is
+// deliberately not inside the PDFs folder: the cache is derived data keyed on
+// file content, and dropping it into the folder the user browses would put
+// files there that they did not put there.
+func ocrCacheDir() string {
+	return filepath.Join(settingsDir(), "ocr-cache")
 }
 
 // migrateLegacySettings moves the settings written under the app's former name
@@ -192,9 +207,15 @@ func (a *App) SearchPDFs(folder, keyword string) (search.Outcome, error) {
 		a.mu.Unlock()
 	}()
 
-	outcome, err := search.SearchPDFs(ctx, folder, keyword, func(progress int) {
+	outcome, err := search.SearchPDFs(ctx, folder, keyword, ocrCacheDir(), func(completed, total int) {
+		progress := 0
+		if total > 0 {
+			progress = int(float64(completed) / float64(total) * 100)
+		}
 		runtime.EventsEmit(a.ctx, "search-progress", map[string]interface{}{
-			"progress": progress,
+			"progress":  progress,
+			"completed": completed,
+			"total":     total,
 		})
 	})
 	if err != nil {
@@ -217,6 +238,86 @@ func (a *App) CancelSearch() {
 	if a.cancelSearch != nil {
 		a.cancelSearch()
 		a.cancelSearch = nil
+	}
+}
+
+// OCRStatus reports whether text recognition is possible on this machine and
+// which languages are installed. It never fails: a missing engine is a state
+// the UI renders, not an error to raise.
+func (a *App) OCRStatus() ocr.Info {
+	return ocr.Status()
+}
+
+// RecognizeText runs OCR over the given files and caches the result, so every
+// later search reads the text back instead of recognising it again.
+//
+// It is called after a search has already returned, not during one: recognition
+// takes seconds per page, and a 31-page scan would otherwise stall the search
+// that discovered it for minutes. The search result the user is looking at
+// stays on screen while this runs, and the frontend re-runs the search once it
+// finishes.
+//
+// languages is Tesseract's own language string, so "deu+eng" recognises a
+// document written in both.
+func (a *App) RecognizeText(paths []string, languages string) (ocr.Report, error) {
+	if len(paths) == 0 {
+		return ocr.Report{Files: []ocr.FileResult{}}, nil
+	}
+
+	a.mu.Lock()
+	if a.cancelOCR != nil {
+		a.cancelOCR()
+	}
+	ctx, cancel := context.WithCancel(a.ctx)
+	a.ocrGen++
+	gen := a.ocrGen
+	a.cancelOCR = cancel
+	a.mu.Unlock()
+
+	defer func() {
+		cancel()
+		a.mu.Lock()
+		if a.ocrGen == gen {
+			a.cancelOCR = nil
+		}
+		a.mu.Unlock()
+	}()
+
+	report, err := ocr.Run(ctx, ocr.Request{
+		Files:     paths,
+		Languages: languages,
+		CacheDir:  ocrCacheDir(),
+	}, func(p ocr.Progress) {
+		progress := 0
+		if p.PagesLeft > 0 {
+			progress = int(float64(p.PagesDone) / float64(p.PagesLeft) * 100)
+		}
+		runtime.EventsEmit(a.ctx, "ocr-progress", map[string]interface{}{
+			"progress":   progress,
+			"fileIndex":  p.FileIndex,
+			"fileTotal":  p.FileTotal,
+			"fileName":   p.FileName,
+			"page":       p.Page,
+			"pageTotal":  p.PageTotal,
+			"pagesDone":  p.PagesDone,
+			"pagesTotal": p.PagesLeft,
+		})
+	})
+	if err != nil {
+		return report, err
+	}
+	return report, nil
+}
+
+// CancelOCR aborts the recognition run currently in flight, if any. A file
+// interrupted part-way is not cached, so the next run starts it over rather
+// than searching half a document.
+func (a *App) CancelOCR() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.cancelOCR != nil {
+		a.cancelOCR()
+		a.cancelOCR = nil
 	}
 }
 
