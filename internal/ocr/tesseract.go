@@ -74,9 +74,17 @@ type Info struct {
 func Status() Info {
 	exe := Locate()
 	if exe == "" {
+		// The app ships its own engine, so "not installed" is the wrong story to
+		// tell: the usual cause is a build whose bundle never made it next to
+		// the .exe, and a user told to go install Tesseract will fix nothing.
+		// Name the place that is empty instead.
 		return Info{
 			Languages: []string{},
-			Reason:    "Tesseract OCR ist nicht installiert.",
+			Reason: fmt.Sprintf(
+				"Die mitgelieferte Texterkennung fehlt — erwartet wird sie unter %q. "+
+					"Die Installation ist vermutlich unvollständig.",
+				filepath.Join(bundledDir, exeName),
+			),
 		}
 	}
 
@@ -85,7 +93,7 @@ func Status() Info {
 		return Info{
 			Path:      exe,
 			Languages: []string{},
-			Reason:    fmt.Sprintf("Tesseract wurde gefunden (%s), lässt sich aber nicht ausführen: %v", exe, err),
+			Reason:    fmt.Sprintf("Die Texterkennung wurde gefunden (%s), lässt sich aber nicht starten: %v", exe, err),
 		}
 	}
 	if len(langs) == 0 {
@@ -93,7 +101,10 @@ func Status() Info {
 			Path:      exe,
 			Version:   version(exe),
 			Languages: []string{},
-			Reason:    "Tesseract ist installiert, aber es sind keine Sprachdaten vorhanden.",
+			Reason: fmt.Sprintf(
+				"Die Texterkennung wurde gefunden (%s), aber es sind keine Sprachdaten installiert.",
+				exe,
+			),
 		}
 	}
 
@@ -158,11 +169,27 @@ func listLanguages(exe string) ([]string, error) {
 	return langs, nil
 }
 
+// psmAutoOSD is page segmentation mode 1: automatic segmentation *with*
+// orientation and script detection.
+//
+// The default (mode 3) segments the page but never asks which way up it is, and
+// a scanned slide deck is landscape content on portrait paper — stored sideways.
+// Read that at mode 3 and a title comes back as "younz Bunjpueyeqsuolsseideq":
+// not a poor transcription but a rotated one, unrecognisable to the scorer, so
+// the file stays unfindable after the minutes just spent recognising it. Worse,
+// the result is cached, which makes it permanent.
+//
+// Mode 1 wants osd.traineddata, which Get-Tesseract.ps1 bundles. An engine
+// found on PATH may not have it: Tesseract then warns on stderr, reads the page
+// unrotated as mode 3 would, and still exits 0 — a degraded result rather than
+// a failure, so there is nothing to guard for here.
+const psmAutoOSD = "1"
+
 // recognize runs one page image through Tesseract and returns its text. The
 // image goes in on stdin and the text comes back on stdout, so no temporary
 // files are involved.
 func recognize(ctx context.Context, exe string, png []byte, languages string) (string, error) {
-	cmd := command(ctx, exe, "-", "-", "-l", languages)
+	cmd := command(ctx, exe, "-", "-", "-l", languages, "--psm", psmAutoOSD)
 	cmd.Stdin = bytes.NewReader(png)
 
 	var stdout, stderr bytes.Buffer

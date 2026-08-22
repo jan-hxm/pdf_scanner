@@ -23,7 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
-# Wails / Go build output
+# Wails / Go build output. Everything under build/ is generated: the binary, the staged
+# Tesseract bundle and the downloaded installer cache. The icon, manifest and version
+# template Wails reads from build/ are sources and live in packaging/, which build.ps1
+# copies in before every build.
 build/
 *.exe
 *.syso

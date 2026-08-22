@@ -30,9 +30,15 @@ import (
 	"time"
 )
 
-// entryVersion is bumped when the stored shape changes. An entry written by an
-// older version is ignored rather than misread, which costs one re-run.
-const entryVersion = 1
+// entryVersion is bumped when the stored shape changes, or when the pipeline
+// that produced the text changes enough that an old entry is wrong rather than
+// merely old. An entry written by an older version is ignored rather than
+// misread, which costs one re-run.
+//
+// 2: recognition asks for orientation detection (--psm 1). Version 1 entries
+// for a sideways scan hold rotated gibberish, and a cache is exactly where that
+// would otherwise stay forever — nothing about a hit invites re-running it.
+const entryVersion = 2
 
 // Entry is one document's recognised text, one string per page.
 type Entry struct {
@@ -101,6 +107,84 @@ func LookupFile(cacheDir, path string) (Entry, bool) {
 		return Entry{}, false
 	}
 	return Load(cacheDir, hash)
+}
+
+// Stats describes what the cache holds. Bytes is what the entries occupy on
+// disk, which is the number that answers "is this worth clearing".
+type Stats struct {
+	Entries int   `json:"entries"`
+	Bytes   int64 `json:"bytes"`
+}
+
+// Stat counts the cache. A missing or unreadable directory is an empty cache:
+// there is nothing the user could do about it and nothing to report.
+func Stat(cacheDir string) Stats {
+	var s Stats
+	if cacheDir == "" {
+		return s
+	}
+	entries, err := os.ReadDir(cacheDir)
+	if err != nil {
+		return s
+	}
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		s.Entries++
+		s.Bytes += info.Size()
+	}
+	return s
+}
+
+// Clear removes every cached recognition and returns how many entries went.
+//
+// Only the files this package writes are touched — entries and the temporaries
+// Store may have left behind by an interrupted write. The directory sits next
+// to settings.json rather than in a directory of its own, so emptying it
+// wholesale would be a licence to delete something that is not ours.
+//
+// A failure to remove one entry does not stop the rest: a cache half-cleared is
+// still better than a cache the button could not touch, and the count returned
+// says what actually happened.
+func Clear(cacheDir string) (int, error) {
+	if cacheDir == "" {
+		return 0, nil
+	}
+	entries, err := os.ReadDir(cacheDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	removed := 0
+	var firstErr error
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		switch filepath.Ext(e.Name()) {
+		case ".json", ".tmp":
+		default:
+			continue
+		}
+		if err := os.Remove(filepath.Join(cacheDir, e.Name())); err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
+		}
+		if filepath.Ext(e.Name()) == ".json" {
+			removed++
+		}
+	}
+	return removed, firstErr
 }
 
 // Store writes an entry, replacing any earlier one for the same file. The

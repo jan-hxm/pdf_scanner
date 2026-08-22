@@ -3,6 +3,8 @@ import {
   OCRStatus,
   RecognizeText,
   CancelOCR,
+  OCRCacheStats,
+  ClearOCRCache,
 } from "../../wailsjs/go/main/App";
 
 /**
@@ -36,6 +38,7 @@ export const ocrStatus = ref({ ...emptyStatus });
 export const isRecognizing = ref(false);
 export const ocrProgress = ref({ ...emptyProgress });
 export const ocrSummary = ref("");
+export const cacheStats = ref({ entries: 0, bytes: 0 });
 
 /** German names for the language codes Tesseract is likely to have installed. */
 const LANGUAGE_NAMES = {
@@ -141,8 +144,47 @@ export async function recognizeFiles(paths, languages) {
   } finally {
     isRecognizing.value = false;
     ocrProgress.value = { ...emptyProgress };
+    // The run just grew the cache, and the settings panel may be sitting open
+    // next to it showing a count that is now wrong.
+    loadCacheStats();
   }
 }
+
+/** Reads how much recognised text is on disk. Never throws: an unreadable cache
+ *  is an empty one as far as anything the user can do about it goes. */
+export async function loadCacheStats() {
+  try {
+    const stats = await OCRCacheStats();
+    cacheStats.value = {
+      entries: stats?.entries || 0,
+      bytes: stats?.bytes || 0,
+    };
+  } catch {
+    cacheStats.value = { entries: 0, bytes: 0 };
+  }
+  return cacheStats.value;
+}
+
+/**
+ * Discards every cached recognition and returns how many documents went.
+ *
+ * Errors are the caller's to show — this one is worth a toast, because unlike a
+ * status probe the user asked for it and is entitled to know it did not happen.
+ */
+export async function clearCache() {
+  const removed = await ClearOCRCache();
+  await loadCacheStats();
+  return removed;
+}
+
+/** Sizes for a sidebar, where "26,4 KB" is the whole point and "27043" is not. */
+export const formatBytes = (bytes) => {
+  if (!bytes) return "0 KB";
+  if (bytes < 1024 * 1024) {
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
+};
 
 export function cancelRecognition() {
   CancelOCR();

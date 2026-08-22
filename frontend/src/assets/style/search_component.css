@@ -357,40 +357,125 @@
 
 /* Text recognition ------------------------------------------------------- */
 
-.ocr-panel {
+/* A raised card, not another `.notice`. This is the one message in the pane that
+   reports an incomplete answer *and* carries the control that completes it; at
+   notice weight it read as trivia and got scrolled past. The warning-toned rail
+   on the leading edge is what separates it from the flat notices around it. */
+.ocr-card {
+  display: flex;
+  flex-flow: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-inline-start: 3px solid var(--warning);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-raised);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Once it is running the warning is answered, so the rail goes to the accent
+   colour: the card stops asking for something and starts reporting progress. */
+.ocr-card.is-working {
+  border-inline-start-color: var(--accent);
+}
+
+/* The card supplies its own rhythm through `gap`; the block margin the shared
+   progress section carries for the search pane would double it up here. */
+.ocr-card .progress-section {
+  margin: 0;
+}
+
+.ocr-card .progress-section .ocr-hint {
+  margin-top: var(--space-2);
+}
+
+.ocr-card-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+.ocr-card-icon {
+  flex: 0 0 auto;
+}
+
+.ocr-card-body {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+}
+
+.ocr-file-list {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  list-style: none;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-sunken);
+}
+
+.ocr-file {
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ocr-file-more {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* The question and its control are one unit: the label explains why the button
+   below it is disabled until the dropdown is answered. */
+.ocr-form {
   display: flex;
   flex-flow: column;
   gap: var(--space-2);
 }
 
-.ocr-controls {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-2);
+.ocr-question {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
 }
 
-.ocr-language {
+.ocr-controls {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-width: 0;
 }
 
-.ocr-label {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  white-space: nowrap;
+.ocr-unavailable {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--warning-soft);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-primary);
 }
 
+/* Full control height, matching the button beside it: this is the primary
+   control of the card, not a secondary setting tucked into a corner. */
 .ocr-select {
+  flex: 1 1 auto;
   min-width: 0;
-  height: var(--control-height-sm);
+  height: var(--control-height);
   padding: 0 var(--space-2);
   font-family: inherit;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--text-primary);
-  background-color: var(--surface-raised);
+  background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   cursor: pointer;

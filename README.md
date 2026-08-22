@@ -20,7 +20,7 @@ hit highlighted, or in an external reader on the right page.
 
 The UI is German. Built with Go + [Wails v2](https://wails.io/), Vue 3 and pdfjs-dist;
 text extraction uses MuPDF through [go-fitz](https://github.com/gen2brain/go-fitz), and
-OCR shells out to Tesseract when it is installed.
+OCR shells out to Tesseract, which the build ships beside the `.exe`.
 
 ## Requirements
 
@@ -30,24 +30,29 @@ OCR shells out to Tesseract when it is installed.
 - WebView2 runtime (preinstalled on Windows 11)
 - Adobe Acrobat Reader — optional; without it, "öffnen" falls back to the default PDF
   handler and loses the jump to the page
-- [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki) — optional; needed only to
-  search scanned PDFs. Install it with the language data you need (`deu` for German), or
-  drop a copy into a `tesseract\` folder next to the `.exe`. Without it the app still
-  reports which files are scans, it just cannot read them.
+- [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki) — needed only to search
+  scanned PDFs, and **the build bundles it for you** (see below), so there is nothing to
+  install. A build made with `-SkipTesseract` falls back to an installed copy or a
+  `tesseract\` folder next to the `.exe`; with neither, the app still reports which files
+  are scans, it just cannot read them.
+- [7-Zip](https://www.7-zip.org/) — only to bundle Tesseract, and only when there is no
+  Tesseract installed to copy from: `winget install -e --id 7zip.7zip`
 
 ## Running it
 
 [build.ps1](build.ps1) wraps the Wails CLI with everything a build needs — a toolchain
-check, the Go checks, the mingw-w64 link workaround and a clean `build/bin`:
+check, the Go checks, the mingw-w64 link workaround, a clean `build/bin`, the packaging
+assets and the bundled OCR engine:
 
 ```powershell
-.build.ps1                 # production binary -> "build/bin/PDF Scanner.exe"
-.build.ps1 -Dev            # live-reload development
-.build.ps1 -SkipChecks     # skip gofmt / go vet / go test
+.\build.ps1                  # production binary -> "build/bin/PDF Scanner.exe"
+.\build.ps1 -Dev             # live-reload development
+.\build.ps1 -SkipChecks      # skip gofmt / go vet / go test
+.\build.ps1 -SkipTesseract   # build without bundling the OCR engine
 ```
 
 If the script is blocked by the execution policy, run it as
-`powershell -ExecutionPolicy Bypass -File .uild.ps1`.
+`powershell -ExecutionPolicy Bypass -File .\build.ps1`.
 
 Underneath it is just the Wails CLI — it generates the Go↔JS bindings, builds the frontend
 and compiles Go in one step. Plain `go build ./...` or `npm run build` do not work on a
@@ -66,6 +71,36 @@ you:
 ```sh
 CGO_LDFLAGS="-Wl,--defsym=__intrinsic_setjmpex=_setjmpex" wails build
 ```
+
+### The bundled OCR engine
+
+[Get-Tesseract.ps1](Get-Tesseract.ps1) stages Tesseract, with German and English language
+data, into `build/tesseract`; `build.ps1` then copies that tree beside the `.exe`, which is
+the first place the app looks for an engine. OCR therefore works on a machine where nothing
+is installed. The step runs on every build and does nothing when the tree is already there.
+
+Tesseract comes from the first source that answers: a directory named with `-From`, an
+installation already on the machine, or the UB Mannheim installer, downloaded once into
+`build/.cache` and unpacked with 7-Zip. Unpacking is not installing — 7-Zip reads the NSIS
+archive without running it, so nothing lands on the system and no elevation is involved.
+The script also runs on its own:
+
+```powershell
+.\Get-Tesseract.ps1                                        # deu + eng
+.\Get-Tesseract.ps1 -Languages deu,eng,fra                 # more languages
+.\Get-Tesseract.ps1 -From 'C:\Program Files\Tesseract-OCR' # copy an existing installation
+.\Get-Tesseract.ps1 -TessdataRepo tessdata_best            # slower, more accurate models
+```
+
+The staged copy is verified by running it: it has to report every requested language
+through `--list-langs`, which is the question `OCRStatus` asks at runtime, and it has to
+read a rendered word back correctly. A build whose Tesseract cannot be staged still
+succeeds — it warns, and the app goes on reporting a missing engine as a state rather than
+an error.
+
+The bundle is about 165 MB next to a 22 MB `.exe`; the training tools and language models
+nobody asked for are stripped, which is 74 MB of what the installer carries. If that
+matters more than out-of-the-box OCR, `-SkipTesseract` leaves it out.
 
 ## Using it
 

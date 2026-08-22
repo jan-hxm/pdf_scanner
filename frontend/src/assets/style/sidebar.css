@@ -139,6 +139,62 @@
   border-radius: var(--radius-sm);
 }
 
+/* OCR cache -------------------------------------------------------------- */
+
+.ocr-cache {
+  display: flex;
+  flex-flow: column;
+  gap: var(--space-2);
+}
+
+/* Same sunken slab as the folder path: both answer "what is currently set". */
+.cache-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.cache-size {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cache-warning {
+  color: var(--text-secondary);
+}
+
+.cache-confirm {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.cache-confirm > * {
+  flex: 1 1 0;
+}
+
+/* Destructive, but only at the moment of confirming — the resting button stays
+   neutral so the panel is not shouting at a user who is looking for the theme
+   switch. */
+.cache-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.cache-danger:hover:not(:disabled) {
+  background-color: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 /* Folder ----------------------------------------------------------------- */
 
 .pdfs-folder {

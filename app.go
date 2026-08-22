@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"pdf_scanner/internal/ocr"
+	"pdf_scanner/internal/ocr/textcache"
 	"pdf_scanner/internal/opener"
 	"pdf_scanner/internal/search"
 )
@@ -319,6 +321,40 @@ func (a *App) CancelOCR() {
 		a.cancelOCR()
 		a.cancelOCR = nil
 	}
+}
+
+// OCRCacheStats reports how much recognised text is on disk, so the sidebar can
+// say what clearing it would actually cost to redo.
+func (a *App) OCRCacheStats() textcache.Stats {
+	return textcache.Stat(ocrCacheDir())
+}
+
+// ClearOCRCache deletes every cached recognition and returns how many documents
+// were forgotten.
+//
+// The cache is content-addressed and never expires, which is right while the
+// text in it is good and unhelpful when it is not: a document recognised in the
+// wrong language, or by a version of the pipeline since fixed, reads back as a
+// perfectly ordinary hit forever. Bumping the entry version handles the fixes
+// that ship with a release; this is the way out for everything else, and it
+// costs only the recognition time again.
+//
+// Refused while a run is in flight, because that run is about to write entries
+// this would not have seen — the user would clear the cache and watch it
+// repopulate with exactly what they were trying to be rid of.
+func (a *App) ClearOCRCache() (int, error) {
+	a.mu.Lock()
+	running := a.cancelOCR != nil
+	a.mu.Unlock()
+	if running {
+		return 0, errors.New("Die Texterkennung läuft gerade — bitte zuerst abbrechen oder abwarten.")
+	}
+
+	removed, err := textcache.Clear(ocrCacheDir())
+	if err != nil {
+		return removed, fmt.Errorf("Der Zwischenspeicher konnte nicht geleert werden: %w", err)
+	}
+	return removed, nil
 }
 
 // OpenPDF opens the PDF at path on the given page in an external reader.

@@ -33,6 +33,10 @@
       </div>
 
       <div class="sidebar-section">
+        <OcrCache></OcrCache>
+      </div>
+
+      <div class="sidebar-section">
         <SearchHistory></SearchHistory>
       </div>
     </aside>
@@ -44,4 +48,5 @@ import { isSidebarOpen } from "../composables/useSettings";
 import SearchHistory from "./SearchHistory.vue";
 import ThemeToggle from "./ThemeToggle.vue";
 import PdfsFolder from "./PdfsFolder.vue";
+import OcrCache from "./OcrCache.vue";
 </script>
